@@ -5,7 +5,7 @@ export default defineConfig({
 	base: "/shader-cube/",
 	plugins: [
 		(monacoEditorPlugin as any).default({
-			languageWorkers: ["editorWorkerService", "typescript"]
+			languageWorkers: ["editorWorkerService", "typescript"],
 		})
 	]
 });
