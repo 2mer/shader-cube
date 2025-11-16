@@ -1,0 +1,59 @@
+body {
+	margin: 0;
+	height: 100vh;
+	display: flex;
+	overflow: hidden;
+}
+
+#editor {
+	/* width: 50%; */
+	height: 100%;
+	flex: 1;
+}
+
+#viewer {
+	/* width: 50%; */
+	/* height: 100%; */
+	background: #111;
+
+	position: absolute;
+	width: 500px;
+	height: 500px;
+	resize: both;
+	bottom: 32px;
+	right: 32px;
+	z-index: 9999;
+
+	/* border-radius: 8px; */
+	border: 1px solid black;
+
+}
+
+.vertical {
+	display: flex;
+	flex-direction: column;
+}
+
+.horizontal {
+	display: flex;
+	flex-direction: row;
+}
+
+.actions {
+	display: flex;
+	gap: 16px;
+	padding: 8px;
+	background-color: #1e1e1e;
+}
+
+#runBtn {
+	/* position: absolute;
+	top: 8px;
+	left: 8px; */
+	padding: 6px 12px;
+	border: 1px solid #555;
+	background: #333;
+	color: white;
+	cursor: pointer;
+	z-index: 10;
+}
