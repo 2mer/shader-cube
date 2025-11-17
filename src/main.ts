@@ -65,6 +65,10 @@ function clearVoxels() {
 	}
 }
 
+// async function drawFrame() {
+
+// }
+
 async function runUserCode() {
 	// first try to get the code, if it fails to compile do not clear the render
 	const { density, RESOLUTION = 40 } = await getUserCode(editor);
@@ -85,6 +89,8 @@ async function runUserCode() {
 	const dummy = new THREE.Object3D();
 	let ptr = 0;
 	const currentPosition = ((window as any).vec3)(0, 0, 0);
+
+	(window as any).time = Date.now();
 
 	for (let xi = 0; xi < N; xi++) {
 		for (let yi = 0; yi < N; yi++) {
