@@ -3,6 +3,8 @@ import { compileTS } from "./compileTs";
 
 type UserModule = {
 	RESOLUTION?: number;
+	PAUSE?: boolean;
+	RATE?: number;
 	density: (pos: any) => any | null;
 }
 

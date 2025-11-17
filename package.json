@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "vite",
 		"build": "tsc && vite build && mv dist/shader-cube/monacoeditorwork dist/ && rm -rf dist/shader-cube",
-		"build:globals": "tsc src/globals.ts --declaration --emitDeclarationOnly --outDir src --declarationDir src",
+		"build:globals": "tsc src/globals.ts --declaration --emitDeclarationOnly --outFile src/globals.d.ts",
 		"preview": "vite preview"
 	},
 	"devDependencies": {
