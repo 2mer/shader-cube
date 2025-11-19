@@ -61,21 +61,29 @@ const codeRunner = new CodeRunner(scene, () => {
 	renderer.render(scene, camera);
 });
 
-// Run whenever content changes (debounced)
-editor.onDidChangeModelContent(
-	debounce(async () => {
-		const { density, RESOLUTION = 40, PAUSE, RATE } = await getUserCode(editor);
+async function pullCodeAndRun() {
+	const { density, RESOLUTION = 40, PAUSE, RATE } = await getUserCode(editor);
 
+	codeRunner.requestUpdate(() => {
 		codeRunner.updateDensityFunction(density);
 		codeRunner.updateResolution(RESOLUTION);
 		codeRunner.updateRate(RATE ?? 20);
+	})
 
-		codeRunner.renderFrame();
+	codeRunner.renderFrame();
 
-		if (codeRunner.isRunning() && PAUSE) {
-			codeRunner.stop();
-		} else if (!codeRunner.isRunning() && !PAUSE) {
-			codeRunner.start();
-		}
-	}, 300)
+	if (codeRunner.isRunning() && PAUSE) {
+		codeRunner.stop();
+	} else if (!codeRunner.isRunning() && !PAUSE) {
+		codeRunner.start();
+	}
+}
+
+// Run whenever content changes (debounced)
+editor.onDidChangeModelContent(
+	debounce(pullCodeAndRun, 300)
 );
+
+setTimeout(() => {
+	pullCodeAndRun();
+}, 1000)

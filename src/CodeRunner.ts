@@ -8,10 +8,25 @@ export enum CodeRunnerStatus {
 	ERROR
 }
 
+const neighborOffsets = [
+	vec3(-1, 0, 0),
+	vec3(1, 0, 0),
+	vec3(0, -1, 0),
+	vec3(0, 1, 0),
+	vec3(0, 0, -1),
+	vec3(0, 0, 1),
+]
+
 export class CodeRunner {
 	private resolution?: number;
 	private rate: number = 20; // frames per second
 	private densityFunc?: (pos: Vec3) => Optional<Vec3>;
+	private presenceBitArray?: Uint32Array;
+	private totalSize?: number;
+
+	private r?: Float32Array;
+	private g?: Float32Array;
+	private b?: Float32Array;
 
 	private material: THREE.Material = new THREE.MeshBasicMaterial();
 	private instancedMesh?: InstancedMesh;
@@ -25,8 +40,58 @@ export class CodeRunner {
 	private passedTime = 0;
 	private timePerFrameMs = 1000 / this.rate;
 
+	private pendingUpdates: (() => void)[] = [];
+
 
 	constructor(public scene: THREE.Scene, public update: () => void) {
+	}
+
+	private idx(x: number, y: number, z: number) {
+		return x + y * this.resolution! + z * this.resolution! * this.resolution!;
+	}
+
+	private isPresent(i: number): boolean {
+		if (!this.presenceBitArray) return false;
+		if (i < 0) return false;
+		if (i >= this.totalSize!) return false;
+
+		return (this.presenceBitArray![i >>> 5] & (1 << (i & 31))) !== 0;
+	}
+
+	private isVisible(x: number, y: number, z: number): boolean {
+		return neighborOffsets.some(offset => {
+			const i = this.idx(x + offset.x, y + offset.y, z + offset.z);
+			return !this.isPresent(i);
+		});
+	}
+
+	// private clearPresent(i: number) {
+	// 	this.presenceBitArray![i >>> 5] &= ~(1 << (i & 31));
+	// }
+
+	private setPresent(i: number, value: boolean) {
+		const w = i >>> 5;
+		const b = 1 << (i & 31);
+		if (value) this.presenceBitArray![w] |= b;
+		else this.presenceBitArray![w] &= ~b;
+	}
+
+	// private getColor(i: number): Vec3 {
+	// 	return new Vec3(
+	// 		this.r![i],
+	// 		this.g![i],
+	// 		this.b![i]
+	// 	);
+	// }
+
+	private setColor(i: number, color: Vec3) {
+		this.r![i] = color.r;
+		this.g![i] = color.g;
+		this.b![i] = color.b;
+	}
+
+	public requestUpdate(cb: () => void) {
+		this.pendingUpdates.push(cb)
 	}
 
 	updateResolution(newResolution: number) {
@@ -38,6 +103,13 @@ export class CodeRunner {
 		const SIZE = 1.0;
 		const cubeSize = SIZE / N;
 		const total = N * N * N;
+
+		this.totalSize = total;
+
+		this.presenceBitArray = new Uint32Array(Math.ceil((newResolution * newResolution * newResolution)) / 32);
+		this.r = new Float32Array(total);
+		this.g = new Float32Array(total);
+		this.b = new Float32Array(total);
 
 		const geo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
 
@@ -64,6 +136,11 @@ export class CodeRunner {
 	}
 
 	renderFrame() {
+		if (this.pendingUpdates.length > 0) {
+			this.pendingUpdates.forEach(cb => cb());
+			this.pendingUpdates = [];
+		}
+
 		if (!this.resolution) return;
 		if (!this.densityFunc) return;
 		if (!this.instancedMesh) return;
@@ -76,6 +153,7 @@ export class CodeRunner {
 
 		(window as any).time = Date.now() / 1000;
 
+		// prepass
 		for (let xi = 0; xi < N; xi++) {
 			for (let yi = 0; yi < N; yi++) {
 				for (let zi = 0; zi < N; zi++) {
@@ -83,19 +161,48 @@ export class CodeRunner {
 					const y = yi / (N - 1);
 					const z = zi / (N - 1);
 
+
 					const color = this.densityFunc(this.currentPosition.set(x, y, z));
-					if (!color) continue;
+					const i = this.idx(xi, yi, zi);
+
+					this.setPresent(i, !!color);
+					if (color) {
+						this.setColor(i, color);
+					}
+
+				}
+			}
+		}
+
+		// upload pass
+		for (let xi = 0; xi < N; xi++) {
+			for (let yi = 0; yi < N; yi++) {
+				for (let zi = 0; zi < N; zi++) {
+					const i = this.idx(xi, yi, zi);
+					if (!this.isPresent(i)) continue;
+					if (!this.isVisible(xi, yi, zi)) continue;
+
+					const x = xi / (N - 1);
+					const y = yi / (N - 1);
+					const z = zi / (N - 1);
 
 					this.dummy.position.set(x - 0.5, y - 0.5, z - 0.5);
 					this.dummy.updateMatrix();
 
 					this.instancedMesh.setMatrixAt(ptr, this.dummy.matrix);
-					this.instancedMesh.setColorAt(ptr, new THREE.Color(color.r, color.g, color.b));
+					this.instancedMesh.setColorAt(ptr, new THREE.Color(this.r![i], this.g![i], this.b![i]));
 
 					ptr++;
 				}
 			}
 		}
+
+		// this.dummy.position.set(x - 0.5, y - 0.5, z - 0.5);
+		// 			this.dummy.updateMatrix();
+
+		// 			this.instancedMesh.setMatrixAt(ptr, this.dummy.matrix);
+		// 			this.instancedMesh.setColorAt(ptr, new THREE.Color(color.r, color.g, color.b));
+		// ptr++;
 
 		this.instancedMesh.count = ptr;
 		this.instancedMesh.instanceColor!.needsUpdate = true;
