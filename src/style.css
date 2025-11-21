@@ -60,7 +60,7 @@ body {
 
 .inline-slider-spacer {
 	display: inline-block;
-	width: calc(120px + 9ch);
+	width: calc(140px + 9ch);
 	/* space pushed into the line */
 	/* text-align: end; */
 	vertical-align: middle;
@@ -78,16 +78,90 @@ body {
 	color: white;
 }
 
+.inline-checkbox-spacer {
+	display: inline-block;
+	width: calc(86px + 9ch);
+	/* space pushed into the line */
+	/* text-align: end; */
+	vertical-align: middle;
+	position: relative;
+}
+
+.inline-checkbox-spacer::after {
+	content: "default: ";
+	white-space: pre;
+	display: inline-block;
+	text-align: end;
+	opacity: 0.38;
+	position: absolute;
+	right: 0;
+	color: white;
+}
+
+.widget-container {
+	background: rgba(255, 255, 255, 0.10);
+	border-radius: 4px;
+	/* padding: 4px 8px; */
+	display: inline-flex;
+	gap: 4px;
+}
+
 .inline-slider {
 	position: absolute;
 	left: 0;
 	top: -2px;
-	width: 100px;
+	width: 120px;
+
+	& input:first-of-type {
+		width: 100%;
+		margin-left: 4px
+	}
+
+	& input:nth-of-type(2) {
+		width: 4ch;
+		background: transparent;
+		border: none;
+		color: #b5cea8;
+		outline: none;
+		border-left: 1px solid rgba(255, 255, 255, 0.10);
+		font-family: Consolas, "Courier New", monospace;
+		font-weight: normal;
+		font-size: 14px;
+		font-feature-settings: "liga" 0, "calt" 0;
+		font-variation-settings: normal;
+		line-height: 19px;
+		letter-spacing: 0px;
+
+
+		&::-webkit-outer-spin-button,
+		&::-webkit-inner-spin-button {
+			/* display: none; <- Crashes Chrome on hover */
+			-webkit-appearance: none;
+			margin: 0;
+			/* <-- Apparently some margin are still there even though it's hidden */
+		}
+
+		&[type=number] {
+			-moz-appearance: textfield;
+			/* Firefox */
+		}
+	}
 }
 
 .inline-checkbox {
 	position: absolute;
 	left: 0;
 	top: -2px;
-	width: 100px;
+	width: 66px;
+
+	& span {
+		color: #569cd6;
+		font-family: Consolas, "Courier New", monospace;
+		font-weight: normal;
+		font-size: 14px;
+		font-feature-settings: "liga" 0, "calt" 0;
+		font-variation-settings: normal;
+		line-height: 19px;
+		letter-spacing: 0px;
+	}
 }

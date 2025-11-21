@@ -12,6 +12,13 @@ type Widget = {
 	transpile: (id: string, defaultValue: string) => string;
 }
 
+function container(...elements: HTMLElement[]): HTMLDivElement {
+	const d = document.createElement("div");
+	d.classList.add("widget-container");
+	elements.forEach(e => d.appendChild(e));
+	return d;
+}
+
 const widgets: Record<string, Widget> = {
 	slider: {
 		regex: /slider\s*\(\s*([^)]+)\s*\)/g,
@@ -19,6 +26,7 @@ const widgets: Record<string, Widget> = {
 		values: new Map<string, number>(),
 		className: "inline-slider-spacer",
 		generateComponent(id: string, match: RegExpExecArray) {
+
 			const initialValue = String(widgets.slider.values.get(id) ?? match[1].trim());
 			const slider = document.createElement("input");
 			slider.type = "range";
@@ -26,14 +34,34 @@ const widgets: Record<string, Widget> = {
 			slider.max = "1";
 			slider.step = "0.01";
 			slider.value = initialValue;
-			slider.className = "inline-slider";
+			// slider.className = "inline-slider";
 			slider.id = id;
+
+			const numInput = document.createElement("input");
+			numInput.className = "inline-slider-numberInput";
+			numInput.type = "number";
+			numInput.value = initialValue;
+			numInput.min = "0";
+			numInput.max = "1";
+			numInput.step = "0.1";
+
+
 			slider.oninput = (e => {
 				const val = parseFloat((e.target as HTMLInputElement).value);
 				widgets.slider.values.set(id, val);
+				numInput.value = String(val);
 			})
 
-			return slider;
+			numInput.oninput = (e) => {
+				const val = parseFloat((e.target as HTMLInputElement).value);
+				widgets.slider.values.set(id, val);
+				slider.value = String(val);
+			}
+
+			const c = container(slider, numInput);
+			c.classList.add("inline-slider");
+
+			return c;
 		},
 		transpile(id, defaultValue) {
 			return `Number(widgets.slider.values.get("${id}") ?? ${defaultValue})`;
@@ -50,14 +78,21 @@ const widgets: Record<string, Widget> = {
 			const checkbox = document.createElement("input");
 			checkbox.type = "checkbox";
 			checkbox.checked = initialValue;
-			checkbox.className = "inline-checkbox";
+			// checkbox.className = "inline-checkbox";
 			checkbox.id = id;
 			checkbox.onchange = (e => {
 				const val = (e.target as HTMLInputElement).checked;
 				widgets.checkbox.values.set(id, val);
+				span.innerText = String(val);
 			})
 
-			return checkbox;
+			const span = document.createElement("span");
+			span.innerText = String(initialValue);
+
+			const c = container(checkbox, span);
+			c.classList.add("inline-checkbox");
+
+			return c;
 		},
 		transpile(id, defaultValue) {
 			return `Boolean(widgets.checkbox.values.get("${id}") ?? ${defaultValue})`;
@@ -122,7 +157,7 @@ export function handleWidgets(editor: monaco.editor.IStandaloneCodeEditor) {
 				const coords = editor.getScrolledVisiblePosition(widgetRange.getStartPosition());
 				if (!coords) return;
 
-				el.style.left = coords.left + 7 + "px";
+				el.style.left = coords.left + 9 + "px";
 				el.style.top = coords.top + editorEl.getBoundingClientRect().top + 1 + "px";
 			}
 
