@@ -196,7 +196,7 @@ export function patchWidgetCode(js: string): string {
 
 		const remainingElements = Array.from(widget.instances);
 
-		output = output.replace(widget.regex, (match, p1) => {
+		output = output.replace(widget.regex, (_, p1) => {
 			const id = remainingElements.shift()!;
 			return widget.transpile(id, p1);
 		});
