@@ -91,10 +91,7 @@ export function handleWidgets(editor: monaco.editor.IStandaloneCodeEditor) {
 
 		while ((match = widget.regex.exec(fullText))) {
 			const index = match.index;
-			const start = model.getPositionAt(index);
-			// const argStart = model.getPositionAt(index + match[0].indexOf("(") + match[1].length);
 			const argStart = model.getPositionAt(index + match[0].indexOf("("));
-			// const argEnd = model.getPositionAt(index + match[0].lastIndexOf(")"));
 			const argEnd = model.getPositionAt(index + match[0].indexOf("(") + 1);
 
 			const id = widgetName + "_" + (widgetCounter++);
@@ -138,51 +135,6 @@ export function handleWidgets(editor: monaco.editor.IStandaloneCodeEditor) {
 			widgets.slider.values.delete(id);
 		});
 	}
-
-	// while ((match = widgets.slider.regex.exec(fullText))) {
-	// 	const index = match.index;
-	// 	const start = model.getPositionAt(index);
-	// 	// const argStart = model.getPositionAt(index + match[0].indexOf("(") + match[1].length);
-	// 	const argStart = model.getPositionAt(index + match[0].indexOf("("));
-	// 	// const argEnd = model.getPositionAt(index + match[0].lastIndexOf(")"));
-	// 	const argEnd = model.getPositionAt(index + match[0].indexOf("(") + 1);
-
-	// 	const id = "slider_" + (widgetCounter++);
-	// 	widgets.slider.instances.push(id);
-
-	// 	oldInstances.delete(id);
-
-	// 	// 1. Create a decoration that *replaces* the argument with layout-affecting inline block
-	// 	newDecorations.push({
-	// 		range: new monaco.Range(argStart.lineNumber, argStart.column, argEnd.lineNumber, argEnd.column),
-	// 		options: {
-	// 			inlineClassName: "inline-spacer",
-	// 			inlineClassNameAffectsLetterSpacing: true
-	// 		}
-	// 	});
-
-
-	// 	// 2. Create a DOM slider placed inside that inline block
-
-	// 	const el =
-	// 		document.body.appendChild(slider);
-
-	// 	const editorEl = editor.getDomNode()!;
-
-	// 	// Reposition on scroll/resize
-	// 	function updatePos() {
-	// 		const widgetRange = new monaco.Range(argStart.lineNumber, argStart.column, argStart.lineNumber, argStart.column);
-	// 		const coords = editor.getScrolledVisiblePosition(widgetRange.getStartPosition());
-	// 		if (!coords) return;
-
-	// 		slider.style.left = coords.left + 7 + "px";
-	// 		slider.style.top = coords.top + editorEl.getBoundingClientRect().top + 1 + "px";
-	// 	}
-
-	// 	updatePos();
-	// 	editor.onDidScrollChange(updatePos);
-	// 	editor.onDidChangeCursorPosition(updatePos);
-	// }
 
 	decorations = editor.deltaDecorations(decorations, newDecorations);
 
