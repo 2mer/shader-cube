@@ -57,3 +57,37 @@ body {
 	cursor: pointer;
 	z-index: 10;
 }
+
+.inline-slider-spacer {
+	display: inline-block;
+	width: calc(120px + 9ch);
+	/* space pushed into the line */
+	/* text-align: end; */
+	vertical-align: middle;
+	position: relative;
+}
+
+.inline-slider-spacer::after {
+	content: "default: ";
+	white-space: pre;
+	display: inline-block;
+	text-align: end;
+	opacity: 0.38;
+	position: absolute;
+	right: 0;
+	color: white;
+}
+
+.inline-slider {
+	position: absolute;
+	left: 0;
+	top: -2px;
+	width: 100px;
+}
+
+.inline-checkbox {
+	position: absolute;
+	left: 0;
+	top: -2px;
+	width: 100px;
+}

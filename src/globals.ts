@@ -1,11 +1,11 @@
 import { fract as _fract, Vec2, Vec3, type ImmutableOperable } from "./vec";
 
 
-function _vec2(x: number, y: number) {
+function _vec2(x: number, y?: number) {
 	return new Vec2(x, y)
 }
 
-function _vec3(x: number, y: number, z: number) {
+function _vec3(x: number, y?: number, z?: number) {
 	return new Vec3(x, y, z);
 }
 
@@ -39,6 +39,8 @@ function _mix<T extends number | ImmutableOperable>(a: T, b: T, t: number): T {
 (window as any).vec2 = _vec2;
 (window as any).vec3 = _vec3;
 (window as any).fract = _fract;
+(window as any).slider = () => 0;
+(window as any).checkbox = () => false;
 
 declare global {
 	const time: number;
@@ -51,6 +53,9 @@ declare global {
 	const min: typeof _min;
 	const max: typeof _max;
 	const clamp: typeof _clamp;
+
+	function slider(defaultValue: number): number;
+	function checkbox(defaultValue: boolean): boolean;
 
 	type Optional<T> = T | null | undefined;
 

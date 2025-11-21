@@ -60,8 +60,8 @@ declare module "vec" {
 }
 declare module "globals" {
     import { fract as _fract, Vec2, Vec3, type ImmutableOperable } from "vec";
-    function _vec2(x: number, y: number): Vec2;
-    function _vec3(x: number, y: number, z: number): Vec3;
+    function _vec2(x: number, y?: number): Vec2;
+    function _vec3(x: number, y?: number, z?: number): Vec3;
     function _min(a: number, b: number): number;
     function _max(a: number, b: number): number;
     function _clamp(value: number, minVal: number, maxVal: number): number;
@@ -75,6 +75,8 @@ declare module "globals" {
         const min: typeof _min;
         const max: typeof _max;
         const clamp: typeof _clamp;
+        function slider(defaultValue: number): number;
+        function checkbox(defaultValue: boolean): boolean;
         type Optional<T> = T | null | undefined;
         type vec2 = Vec2;
         type vec3 = Vec3;

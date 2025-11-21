@@ -22,7 +22,7 @@ export class CodeRunner {
 	private rate: number = 20; // frames per second
 	private densityFunc?: (pos: Vec3) => Optional<Vec3>;
 	private presenceBitArray?: Uint32Array;
-	private totalSize?: number;
+	private pause?: boolean | (() => boolean);
 
 	private r?: Float32Array;
 	private g?: Float32Array;
@@ -46,28 +46,38 @@ export class CodeRunner {
 	constructor(public scene: THREE.Scene, public update: () => void) {
 	}
 
+	/**
+	 * fails if out of bounds (negative or bigger than res)
+	 */
 	private idx(x: number, y: number, z: number) {
 		return x + y * this.resolution! + z * this.resolution! * this.resolution!;
 	}
 
 	private isPresent(i: number): boolean {
 		if (!this.presenceBitArray) return false;
-		if (i < 0) return false;
-		if (i >= this.totalSize!) return false;
 
 		return (this.presenceBitArray![i >>> 5] & (1 << (i & 31))) !== 0;
 	}
 
-	private isVisible(x: number, y: number, z: number): boolean {
-		return neighborOffsets.some(offset => {
-			const i = this.idx(x + offset.x, y + offset.y, z + offset.z);
-			return !this.isPresent(i);
-		});
+	private isInBounds(x: number, y: number, z: number): boolean {
+		return x >= 0 && y >= 0 && z >= 0 &&
+			x < this.resolution! && y < this.resolution! && z < this.resolution!;
 	}
 
-	// private clearPresent(i: number) {
-	// 	this.presenceBitArray![i >>> 5] &= ~(1 << (i & 31));
-	// }
+	private isVisible(x: number, y: number, z: number): boolean {
+		const hidden = neighborOffsets.every(offset => {
+			const nX = x + offset.x;
+			const nY = y + offset.y;
+			const nZ = z + offset.z;
+
+			if (!this.isInBounds(nX, nY, nZ)) return false;
+
+			const i = this.idx(nX, nY, nZ);
+			return this.isPresent(i);
+		});
+
+		return !hidden;
+	}
 
 	private setPresent(i: number, value: boolean) {
 		const w = i >>> 5;
@@ -75,14 +85,6 @@ export class CodeRunner {
 		if (value) this.presenceBitArray![w] |= b;
 		else this.presenceBitArray![w] &= ~b;
 	}
-
-	// private getColor(i: number): Vec3 {
-	// 	return new Vec3(
-	// 		this.r![i],
-	// 		this.g![i],
-	// 		this.b![i]
-	// 	);
-	// }
 
 	private setColor(i: number, color: Vec3) {
 		this.r![i] = color.r;
@@ -104,9 +106,9 @@ export class CodeRunner {
 		const cubeSize = SIZE / N;
 		const total = N * N * N;
 
-		this.totalSize = total;
+		const bitArrayLength = Math.ceil((newResolution * newResolution * newResolution) / 32);
+		this.presenceBitArray = new Uint32Array(bitArrayLength);
 
-		this.presenceBitArray = new Uint32Array(Math.ceil((newResolution * newResolution * newResolution)) / 32);
 		this.r = new Float32Array(total);
 		this.g = new Float32Array(total);
 		this.b = new Float32Array(total);
@@ -133,6 +135,10 @@ export class CodeRunner {
 
 		this.rate = newRate;
 		this.timePerFrameMs = 1000 / this.rate;
+	}
+
+	updateState(pause: boolean | (() => boolean) | undefined) {
+		this.pause = pause;
 	}
 
 	renderFrame() {
@@ -209,14 +215,10 @@ export class CodeRunner {
 		this.instancedMesh.instanceMatrix.needsUpdate = true;
 	}
 
-	start() {
-		if (this.status === CodeRunnerStatus.RUNNING) return;
-
-		if (!this.resolution) return;
-		if (!this.densityFunc) return;
-		if (!this.instancedMesh) return;
-
-		this.status = CodeRunnerStatus.RUNNING;
+	loop() {
+		if (!this.resolution) throw new Error("Resolution not set");
+		if (!this.densityFunc) throw new Error("Resolution not set");
+		if (!this.instancedMesh) throw new Error("Resolution not set");
 
 		const frameLoop = () => {
 			const now = performance.now();
@@ -226,6 +228,8 @@ export class CodeRunner {
 
 			const isUpdateFrame = this.passedTime >= this.timePerFrameMs;
 			this.passedTime %= this.timePerFrameMs;
+
+			this.computeState();
 
 			if (this.isRunning()) {
 				try {
@@ -245,6 +249,22 @@ export class CodeRunner {
 		}
 
 		requestAnimationFrame(frameLoop);
+	}
+
+	computeState() {
+		const paused = typeof this.pause === 'function' ? this.pause() : Boolean(this.pause);
+
+		if (this.isRunning() && paused) {
+			this.stop();
+		} else if (!this.isRunning() && !paused) {
+			this.start();
+		}
+	}
+
+	start() {
+		if (this.status === CodeRunnerStatus.RUNNING) return;
+
+		this.status = CodeRunnerStatus.RUNNING;
 	}
 
 	stop() {

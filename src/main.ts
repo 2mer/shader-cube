@@ -1,4 +1,5 @@
 import './style.css';
+import './globals';
 
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -6,8 +7,8 @@ import * as monaco from "monaco-editor";
 import { getUserCode } from './getUserCode';
 import globalsDts from './globals.d.ts?raw';
 import exampleCode from './exampleCode.ts?raw';
-import './globals';
 import { CodeRunner } from './CodeRunner';
+
 
 monaco.languages.typescript.typescriptDefaults.addExtraLib(
 	globalsDts,
@@ -68,15 +69,12 @@ async function pullCodeAndRun() {
 		codeRunner.updateDensityFunction(density);
 		codeRunner.updateResolution(RESOLUTION);
 		codeRunner.updateRate(RATE ?? 20);
+		codeRunner.updateState(PAUSE);
 	})
 
 	codeRunner.renderFrame();
+	codeRunner.loop();
 
-	if (codeRunner.isRunning() && PAUSE) {
-		codeRunner.stop();
-	} else if (!codeRunner.isRunning() && !PAUSE) {
-		codeRunner.start();
-	}
 }
 
 // Run whenever content changes (debounced)
@@ -86,4 +84,6 @@ editor.onDidChangeModelContent(
 
 setTimeout(() => {
 	pullCodeAndRun();
-}, 1000)
+}, 1000);
+
+(window as any).codeRunner = codeRunner;
